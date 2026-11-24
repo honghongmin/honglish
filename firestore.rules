@@ -1,0 +1,22 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // 각자 학습 기록: 본인만 읽고 쓸 수 있음
+    match /users/{uid} {
+      allow read, write: if request.auth != null && request.auth.uid == uid;
+    }
+    // 랭킹용 공개 요약: 누구나 읽고, 본인 것만 쓸 수 있음
+    match /players/{uid} {
+      allow read: if true;
+      allow create, update: if request.auth != null && request.auth.uid == uid
+        && request.resource.data.keys().hasOnly(['nick','group','level','streak','week','total','words','last'])
+        && request.resource.data.nick is string
+        && request.resource.data.nick.size() > 0 && request.resource.data.nick.size() <= 12
+        && request.resource.data.group is string && request.resource.data.group.size() <= 20
+        && request.resource.data.level is int && request.resource.data.streak is int
+        && request.resource.data.week is int && request.resource.data.total is int
+        && request.resource.data.words is int;
+      allow delete: if request.auth != null && request.auth.uid == uid;
+    }
+  }
+}
