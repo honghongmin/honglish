@@ -28,7 +28,7 @@ const isDone=dt=>{const d=S.days[dt];return !!(d&&d.w&&d.r&&d.s&&d.k&&d.a)};
 function streak(){const t=today();let c=0,lastF=-99;for(let k=0;k<500;k++){const dt=addD(t,-k);if(S.start&&dt<S.start)break;if(isDone(dt)){c++;continue}if(k===0)continue;if(k-lastF>=7&&isDone(addD(t,-(k+1)))){lastF=k;continue}break}return c}
 const weekDone=()=>{let c=0;for(let k=0;k<7;k++)if(isDone(addD(today(),-k)))c++;return c};
 const totalDone=()=>Object.keys(S.days).filter(isDone).length;
-function pushPlayer(){if(!FB||!S.nick||!S.level)return;const p={nick:S.nick.slice(0,12),group:S.group||'',level:S.level|0,streak:streak()|0,week:weekDone()|0,total:totalDone()|0,words:Object.keys(S.srs).length|0,last:today()};const k=JSON.stringify(p);if(k===lastPush)return;lastPush=k;const{fs,db,uid}=FB;pq=pq.then(()=>fs.setDoc(fs.doc(db,'players',uid),p)).catch(()=>{lastPush=''})}
+function pushPlayer(){if(!FB||!S.nick||!S.level)return;const p={nick:S.nick.slice(0,12),group:'',level:S.level|0,streak:streak()|0,week:weekDone()|0,total:totalDone()|0,words:Object.keys(S.srs).length|0,last:today()};const k=JSON.stringify(p);if(k===lastPush)return;lastPush=k;const{fs,db,uid}=FB;pq=pq.then(()=>fs.setDoc(fs.doc(db,'players',uid),p)).catch(()=>{lastPush=''})}
 const getW=id=>{const[l,i]=String(id).split('-');const w=W[l]&&W[l][+i];return w?{id,en:w[0],ko:w[1],use:w[2],ex:w[3],exk:w[4]}:null};
 const dayN=()=>Math.max(0,diff(S.start||today(),today()));
 function wordsToday(n){const l=S.level,p=W[l],b=(((n-S.lvDay)*5)%p.length+p.length)%p.length;return[0,1,2,3,4].map(j=>getW(l+'-'+((b+j)%p.length)))}
@@ -45,7 +45,7 @@ const sayB=t=>`<button class="ib" data-act="say" data-t="${esc(t)}" aria-label="
 const starB=(key,en,ko)=>`<button class="ib st${S.star[key]?' on':''}" data-act="star" data-k="${esc(key)}" data-en="${esc(en)}" data-ko="${esc(ko)}" aria-label="단어장에 추가" aria-pressed="${!!S.star[key]}">${IC.star}</button>`;
 
 /* 화면 */
-function header(){const d=S.days[today()]||{};return `<header class="top"><div class="wrap"><div class="brand">홍글리쉬</div><div class="hrow"><div class="hi">안녕하세요<b>${esc(S.nick)}</b><span class="lv">Lv.${S.level} ${LVN[S.level]}${S.group?' · '+esc(S.group):''}</span></div><div class="big">${streak()}<small>일 연속</small></div></div><div class="track">${PART.map(([k,n])=>`<div class="seg${d[k]?' on':''}"><i>${d[k]?'✓':'·'}</i>${n}</div>`).join('')}</div></div></header>`}
+function header(){const d=S.days[today()]||{};return `<header class="top"><div class="wrap"><div class="brand">홍글리쉬</div><div class="hrow"><div class="hi">안녕하세요<b>${esc(S.nick)}</b><span class="lv">Lv.${S.level} ${LVN[S.level]}</span></div><div class="big">${streak()}<small>일 연속</small></div></div><div class="track">${PART.map(([k,n])=>`<div class="seg${d[k]?' on':''}"><i>${d[k]?'✓':'·'}</i>${n}</div>`).join('')}</div></div></header>`}
 function tabs(v){return `<nav class="tabs" aria-label="메뉴"><div class="wrap" style="display:flex;width:100%;padding:0">${[["today","오늘"],["words","단어장"],["test","테스트"],["rank","랭킹"]].map(([h,n])=>`<a href="#${h}" class="${v===h?'on':''}"${v===h?' aria-current="page"':''}><svg viewBox="0 0 24 24" aria-hidden="true">${NAV[h]}</svg>${n}</a>`).join('')}</div></nav>`}
 const ck=on=>`<span class="ck${on?' y':''}">${on?'완료':'할 일'}</span>`;
 function vToday(){const d=plan(),n=dayN(),ws=wordsToday(n),ss=sentFor(n),ks=sentFor(Math.max(0,n-1)),A=artFor(n);
@@ -92,22 +92,22 @@ return h+`</section>`}
 function vTest(){if(T)return T.done?vResult():vQuiz();const ws=weekState(),lt=lastTest();let h=`<section><h2>주간 단어 테스트</h2><p class="sub">일주일에 한 번, 배운 단어와 별표 단어 중에서 10문제가 나와요.</p><div class="card">`;
 if(ws.n<4)h+=`단어를 4개 이상 배우면 테스트를 볼 수 있어요. 지금 ${ws.n}개.`;else if(ws.open)h+=`이번 주 테스트가 열렸어요.<div class="row"><button class="btn" data-act="wstart">테스트 시작</button></div>`;else h+=`다음 테스트는 <b>${md(ws.next)}</b>에 열려요.<div class="row"><button class="btn ghost" data-act="pstart">연습 테스트 (기록 안 됨)</button></div>`;
 h+=`</div>${lt?`<p class="note">지난 테스트: ${md(lt.date)} · ${lt.score}/${lt.total}</p>`:''}</section><section><h2>레벨테스트 다시 보기</h2><p class="sub">지금 Lv.${S.level} ${LVN[S.level]}. 12문제로 레벨을 다시 정할 수 있어요.</p><button class="btn ghost" data-act="lstart">레벨테스트 시작</button></section>`;return h}
-function inviteLink(){const b=location.origin+location.pathname;return S.group?b+'?g='+encodeURIComponent(S.group):b}
-function vRank(){const g=S.group;let h=`<section><h2>${g?esc(g)+' 랭킹':'전체 랭킹'}</h2><p class="sub">연속 학습일이 먼저, 같으면 이번 주에 다섯 칸을 채운 날 수로 순위를 매겨요. 실력이 아니라 꾸준함 대결이에요.</p>`;
+function inviteLink(){return location.origin+location.pathname}
+function vRank(){let h=`<section><h2>랭킹</h2><p class="sub">연속 학습일이 먼저, 같으면 이번 주에 다섯 칸을 채운 날 수로 순위를 매겨요. 실력이 아니라 꾸준함 대결이에요.</p>`;
 if(!window.FIREBASE_CONFIG)h+=`<div class="card note">랭킹 서버가 아직 연결되지 않았어요. 지금은 내 기록만 이 기기에 저장돼요.</div>`;
 else if(!FB)h+=`<div class="card note">${ready?'랭킹 서버에 연결하지 못했어요. 인터넷 연결을 확인해 주세요.':'랭킹 불러오는 중…'}</div>`;
 else if(playersErr)h+=`<div class="card note">랭킹을 불러오지 못했어요. 잠시 후 다시 열어주세요.</div>`;
 else if(!players)h+=`<div class="card note">랭킹 불러오는 중…</div>`;
 else{const ps=players.map(p=>({id:p.id,nick:String(p.nick||'친구').slice(0,12),level:Number(p.level)||1,streak:Number(p.streak)||0,week:Math.min(7,Number(p.week)||0),total:Number(p.total)||0,words:Number(p.words)||0,last:String(p.last||'')})).map(p=>{if(p.last&&diff(p.last,today())>1)p.streak=0;return p}).sort((a,b)=>b.streak-a.streak||b.week-a.week||b.total-a.total);h+=ps.length?ps.slice(0,100).map((p,i)=>`<div class="rk${p.id===FB.uid?' me':''}"><span class="n">${i+1}</span><div><b>${esc(p.nick)}</b> <span class="use">Lv.${p.level} · 단어 ${p.words}개</span><div class="bar"><i style="width:${p.week/7*100}%"></i></div><div class="note">이번 주 ${p.week}/7일</div></div><div class="num">${p.streak}일<small>연속</small></div></div>`).join(''):`<div class="card note">아직 아무도 없어요. 오늘 다섯 칸을 채우면 첫 번째로 올라가요.</div>`}
-h+=`</section><section><h2>친구 초대</h2><p class="sub">${g?`이 링크로 들어온 친구는 바로 <b>${esc(g)}</b> 그룹에 들어와요.`:'그룹을 만들면 우리끼리만 랭킹을 볼 수 있어요. 아래에서 그룹 이름을 정해보세요.'}</p><div class="copy"><input type="text" id="lnk" readonly value="${esc(inviteLink())}" aria-label="초대 링크"><button class="btn" data-act="share">공유</button></div></section>`;
-h+=`<section><h2>내 기록</h2><div class="stats"><div><b>${streak()}</b>연속일</div><div><b>${weekDone()}/7</b>이번 주</div><div><b>${totalDone()}</b>총 완료일</div></div></section><section><h2>설정</h2><form id="nf"><label for="nick">닉네임</label><input type="text" id="nick" maxlength="12" value="${esc(S.nick)}" autocomplete="nickname"><label for="grp">그룹 이름 <span class="note">(비우면 전체 랭킹)</span></label><input type="text" id="grp" maxlength="20" value="${esc(S.group)}" placeholder="예: 우리반" autocomplete="off"><div class="row"><button class="btn ghost wide">저장</button></div></form><p class="note">기록은 이 기기의 브라우저에 연결돼 있어요. 브라우저 데이터를 지우거나 다른 폰에서 열면 새로 시작해요.</p></section>`;return h}
-function vOnboard(){const g=urlGroup!=null?urlGroup:'';return `<div class="wrap hero"><img class="logo" src="icon-192.png" alt=""><h1>홍글리쉬</h1><p class="sub" style="font-size:16px">하루 10분, 친구들이랑 영어 습관 만들기. 매일 단어 5개, 문장 3개, 영작 3개, 짧은 아티클 1개를 채우면 끝이에요.</p><form id="nf" class="card">${g?`<p style="margin:0 0 4px">친구가 <span class="chip">${esc(g)}</span> 그룹에 초대했어요.</p>`:''}<label for="nick" style="margin-top:4px">랭킹에 보일 닉네임</label><input type="text" id="nick" maxlength="12" placeholder="예: 영어왕" autocomplete="nickname"><label for="grp">그룹 이름 <span class="note">(친구들과 같게, 없으면 비워두기)</span></label><input type="text" id="grp" maxlength="20" value="${esc(g)}" placeholder="예: 우리반" autocomplete="off"><div class="row"><button class="btn wide">레벨테스트 하러 가기</button></div><p class="note">12문제, 2분 정도 걸려요. 회원가입은 필요 없어요.</p></form></div>`}
+h+=`</section><section><h2>친구 초대</h2><p class="sub">이 링크를 보내면 친구가 바로 들어와서 같은 랭킹에 올라가요.</p><div class="copy"><input type="text" id="lnk" readonly value="${esc(inviteLink())}" aria-label="초대 링크"><button class="btn" data-act="share">공유</button></div></section>`;
+h+=`<section><h2>내 기록</h2><div class="stats"><div><b>${streak()}</b>연속일</div><div><b>${weekDone()}/7</b>이번 주</div><div><b>${totalDone()}</b>총 완료일</div></div></section><section><h2>설정</h2><form id="nf"><label for="nick">닉네임</label><input type="text" id="nick" maxlength="12" value="${esc(S.nick)}" autocomplete="nickname"><div class="row"><button class="btn ghost wide">저장</button></div></form><p class="note">기록은 이 기기의 브라우저에 연결돼 있어요. 브라우저 데이터를 지우거나 다른 폰에서 열면 새로 시작해요.</p></section>`;return h}
+function vOnboard(){return `<div class="wrap hero"><img class="logo" src="icon-192.png" alt=""><h1>홍글리쉬</h1><p class="sub" style="font-size:16px">하루 10분, 친구들이랑 영어 습관 만들기. 매일 단어 5개, 문장 3개, 영작 3개, 짧은 아티클 1개를 채우면 끝이에요.</p><form id="nf" class="card"><label for="nick" style="margin-top:4px">랭킹에 보일 닉네임</label><input type="text" id="nick" maxlength="12" placeholder="예: 영어왕" autocomplete="nickname"><div class="row"><button class="btn wide">레벨테스트 하러 가기</button></div><p class="note">12문제, 2분 정도 걸려요. 회원가입은 필요 없어요.</p></form></div>`}
 function render(){const app=$('#app');let v=(location.hash||'#today').slice(1);if(!['today','words','test','rank'].includes(v))v='today';document.body.classList.toggle('has-nav',!!(S.nick&&S.level));
 if(!S.nick){app.innerHTML=vOnboard();return}
 if(!S.level){if(!T||T.kind!=='level')T={kind:'level',qs:LT,i:0,score:0,pick:null};app.innerHTML=`<div class="wrap" style="padding-top:var(--safe-t)">${T.done?vResult():vQuiz()}</div>`;return}
 const y=window.scrollY;app.innerHTML=header()+`<main class="wrap">${v==='today'?vToday():v==='words'?vWords():v==='test'?vTest():vRank()}</main>`+tabs(v);window.scrollTo(0,y);if(ready)pushPlayer()}
 function setStar(k,en,ko,on){if(on)S.star[k]={en,ko};else delete S.star[k];save()}
-async function share(){const url=inviteLink(),text=`홍글리쉬에서 같이 영어 공부하자!${S.group?` (그룹: ${S.group})`:''}`;try{if(navigator.share){await navigator.share({title:'홍글리쉬',text,url});return}}catch(e){if(e&&e.name==='AbortError')return}try{await navigator.clipboard.writeText(url);toast('초대 링크를 복사했어요')}catch(e){const i=$('#lnk');if(i){i.focus();i.select()}toast('링크를 길게 눌러 복사해 주세요')}}
+async function share(){const url=inviteLink(),text='홍글리쉬에서 같이 영어 공부하자!';try{if(navigator.share){await navigator.share({title:'홍글리쉬',text,url});return}}catch(e){if(e&&e.name==='AbortError')return}try{await navigator.clipboard.writeText(url);toast('초대 링크를 복사했어요')}catch(e){const i=$('#lnk');if(i){i.focus();i.select()}toast('링크를 길게 눌러 복사해 주세요')}}
 function act(a,el){const t=today(),d=S.days[t];
 if(a==='say')return say(el.dataset.t);
 if(a==='share')return share();
@@ -130,19 +130,17 @@ save();render()}
 document.addEventListener('click',e=>{const el=e.target.closest('[data-act]');if(!el)return;e.preventDefault();act(el.dataset.act,el)});
 document.addEventListener('keydown',e=>{if((e.key==='Enter'||e.key===' ')&&e.target.dataset&&e.target.dataset.act==='tk'){e.preventDefault();openPop(e.target)}if(e.key==='Escape')closePop()});
 document.addEventListener('input',e=>{if(e.target.dataset&&e.target.dataset.ki!=null)K.inp[e.target.dataset.ki]=e.target.value});
-document.addEventListener('submit',e=>{if(e.target.id!=='nf')return;e.preventDefault();const v=$('#nick').value.trim().slice(0,12);if(!v){toast('닉네임을 입력해 주세요');$('#nick').focus();return}const g=cleanGroup($('#grp')?$('#grp').value:S.group);const changedG=g!==S.group;S.nick=v;S.group=g;lastPush='';save();if(changedG)subRank();toast('저장했어요');render()});
+document.addEventListener('submit',e=>{if(e.target.id!=='nf')return;e.preventDefault();const v=$('#nick').value.trim().slice(0,12);if(!v){toast('닉네임을 입력해 주세요');$('#nick').focus();return}S.nick=v;S.group='';lastPush='';save();toast('저장했어요');render()});
 window.addEventListener('hashchange',()=>{closePop();render()});
 
 /* 카카오톡·인스타 등 앱 안 브라우저 안내 */
 if(/KAKAOTALK|Instagram|FBAN|FBAV|NAVER\(inapp|Line\//i.test(navigator.userAgent)){const b=$('#inapp');b.textContent='앱 안 브라우저에서는 발음 듣기나 기록 저장이 잘 안 될 수 있어요. 메뉴에서 ‘다른 브라우저로 열기’를 눌러 크롬이나 사파리로 열어주세요.';b.hidden=false}
 
 /* Firebase */
-function subRank(){if(!FB)return;if(unsubRank){unsubRank();unsubRank=null}players=null;playersErr=false;rankGroup=S.group||'';const{fs,db}=FB;unsubRank=fs.onSnapshot(fs.query(fs.collection(db,'players'),fs.where('group','==',rankGroup)),s=>{players=s.docs.map(x=>Object.assign({id:x.id},x.data()));if((location.hash||'#today')==='#rank')render()},()=>{playersErr=true;render()})}
+function subRank(){if(!FB)return;if(unsubRank){unsubRank();unsubRank=null}players=null;playersErr=false;rankGroup=S.group||'';const{fs,db}=FB;unsubRank=fs.onSnapshot(fs.collection(db,'players'),s=>{players=s.docs.map(x=>Object.assign({id:x.id},x.data()));if((location.hash||'#today')==='#rank')render()},()=>{playersErr=true;render()})}
 async function initFB(){const cfg=window.FIREBASE_CONFIG;if(!cfg||!cfg.apiKey)return;const B='https://www.gstatic.com/firebasejs/10.12.2/';const[a,au,fs]=await Promise.all([import(B+'firebase-app.js'),import(B+'firebase-auth.js'),import(B+'firebase-firestore.js')]);const app=a.initializeApp(cfg);const auth=au.getAuth(app);const cur=await new Promise(res=>{const un=au.onAuthStateChanged(auth,u=>{un();res(u)})});const user=cur||(await au.signInAnonymously(auth)).user;const db=fs.getFirestore(app);FB={fs,db,uid:user.uid};
 try{const snap=await fs.getDoc(fs.doc(db,'users',user.uid));if(snap.exists()){const r=snap.data();if(r&&r.nick&&(!S.nick||(r.updated||0)>(S.updated||0))){S=Object.assign(blank(),r);lsSet(LS,S)}else if(S.nick)save()}else if(S.nick)save()}catch(e){}}
-(async()=>{if(urlGroup!=null&&S.nick&&urlGroup&&urlGroup!==S.group){S.group=urlGroup;save();setTimeout(()=>toast(`‘${urlGroup}’ 그룹에 들어왔어요`),300)}
-render();
+(async()=>{render();
 try{await Promise.race([initFB(),new Promise((_,j)=>setTimeout(()=>j(new Error('timeout')),15000))])}catch(e){console.warn('Firebase',e)}
-if(FB&&urlGroup!=null&&S.nick&&urlGroup&&urlGroup!==S.group){S.group=urlGroup;save()}
 ready=true;subRank();render()})();
 }
