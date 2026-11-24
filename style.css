@@ -88,3 +88,15 @@ label{display:block;font-weight:700;margin:14px 0 6px}
 .hero{padding:calc(48px + var(--safe-t)) max(4vw,16px) 24px}.hero h1{font:700 clamp(32px,8vw,46px)/1.15 Outfit,"IBM Plex Sans KR",sans-serif;margin:0 0 12px;text-wrap:balance}
 .hero .logo{width:72px;height:72px;border-radius:18px;display:block;margin-bottom:18px}
 .copy{display:flex;gap:8px}.copy input{flex:1}
+.art.trs{line-height:1.8}
+.sen{display:block;margin-bottom:12px}
+.sen .tr{display:block;font-size:15px;color:var(--mute);line-height:1.6;margin-top:2px}
+.ctx{margin-top:10px;padding:10px 12px;background:var(--soft);border-radius:10px;font-size:14px}
+.ctx .trl{color:var(--mute);margin-top:4px}
+.bdg{display:inline-block;font-size:12px;padding:1px 8px;border-radius:99px;margin-left:4px;vertical-align:2px;white-space:nowrap}
+.bdg.ok{background:color-mix(in srgb,var(--ok) 18%,transparent);color:var(--ok)}
+.bdg.no{background:color-mix(in srgb,var(--coral) 16%,transparent);color:var(--coral)}
+.btn.sm{min-height:36px;padding:6px 12px;font-size:14px;border-radius:10px}
+.srch{margin:0 0 10px}.srch input{width:100%;font-size:16px;padding:12px;border-radius:12px;border:1px solid var(--line);background:var(--card);-webkit-appearance:none;appearance:none}
+.pokebar{display:flex;gap:10px;align-items:center;justify-content:space-between;margin-top:18px;padding:14px 16px;border-radius:14px;background:color-mix(in srgb,var(--coral) 14%,var(--bg));border:1px solid color-mix(in srgb,var(--coral) 40%,transparent)}
+.pokebar div div{font-size:14px;color:var(--mute)}
