@@ -17,21 +17,23 @@ const lsGet=k=>{try{return JSON.parse(localStorage.getItem(k)||'null')}catch(e){
 const lsSet=(k,v)=>{try{localStorage.setItem(k,JSON.stringify(v))}catch(e){}};
 const cleanGroup=g=>String(g||'').trim().replace(/[\/\\#?]/g,'').slice(0,20);
 let S=Object.assign(blank(),lsGet(LS)||{});
-let FB=null,ready=false,players=null,playersErr=false,unsubRank=null,saveT=null,wq=Promise.resolve(),pq=Promise.resolve(),lastPush='',T=null,rankGroup=null;
+let FB=null,ready=false,players=null,playersErr=false,unsubRank=null,saveT=null,wq=Promise.resolve(),pq=Promise.resolve(),lastPush='',T=null,rankGroup=null,rankAt=0,rankBusy=false;
 const K={inp:{},res:{},flip:false,q:'',tr:false,pend:null};let pokes=[],pokeIds=[],unsubPoke=null;
 const CA='ABCDEFGHJKLMNPQRSTUVWXYZ23456789',genCode=()=>{const a=new Uint32Array(10);crypto.getRandomValues(a);return Array.from(a,x=>CA[x%32]).join('')},fmtCode=c=>c?c.slice(0,5)+'-'+c.slice(5):'',normCode=v=>String(v||'').toUpperCase().replace(/[^A-Z0-9]/g,'');
 const $=s=>document.querySelector(s);
 const urlGroup=(()=>{try{const g=new URLSearchParams(location.search).get('g');return g==null?null:cleanGroup(g)}catch(e){return null}})();
 
 function toast(m){const t=$('#toast');t.textContent=m;t.style.display='block';clearTimeout(toast.h);toast.h=setTimeout(()=>t.style.display='none',2600)}
-function save(){S.updated=Date.now();lsSet(LS,S);if(!FB)return;clearTimeout(saveT);saveT=setTimeout(()=>{const body=JSON.parse(JSON.stringify(S));const{fs,db,uid}=FB;wq=wq.then(()=>S.code?fs.setDoc(fs.doc(db,'accounts',S.code),{pid:FB.pid,state:body,updated:body.updated}):fs.setDoc(fs.doc(db,'users',uid),body)).catch(()=>toast('인터넷 연결을 확인해 주세요. 기록은 이 기기에 저장돼 있어요.'))},800)}
+function save(){S.updated=Date.now();lsSet(LS,S);if(!FB)return;clearTimeout(saveT);saveT=setTimeout(()=>{const body=JSON.parse(JSON.stringify(S));const{fs,db,uid}=FB;wq=wq.then(()=>S.code?fs.setDoc(fs.doc(db,'accounts',S.code),{pid:FB.pid,state:body,updated:body.updated}):fs.setDoc(fs.doc(db,'users',uid),body)).catch(()=>toast('인터넷 연결을 확인해 주세요. 기록은 이 기기에 저장돼 있어요.'))},2500)}
+function flushSave(){if(!saveT||!FB)return;clearTimeout(saveT);saveT=null;const body=JSON.parse(JSON.stringify(S));const{fs,db,uid}=FB;wq=wq.then(()=>S.code?fs.setDoc(fs.doc(db,'accounts',S.code),{pid:FB.pid,state:body,updated:body.updated}):fs.setDoc(fs.doc(db,'users',uid),body)).catch(()=>{})}
+document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='hidden')flushSave()});window.addEventListener('pagehide',flushSave);
 const isDone=dt=>{const d=S.days[dt];return !!(d&&d.w&&d.r&&d.s&&d.k&&d.a)};
 function streak(){const t=today();let c=0,lastF=-99;for(let k=0;k<500;k++){const dt=addD(t,-k);if(S.start&&dt<S.start)break;if(isDone(dt)){c++;continue}if(k===0)continue;if(k-lastF>=7&&isDone(addD(t,-(k+1)))){lastF=k;continue}break}return c}
 const weekStart=t=>{const n=toN(t),dow=(new Date(n*864e5).getUTCDay()+6)%7;return fromN(n-dow)};
 const weekDone=()=>{const t=today(),ws=weekStart(t);let c=0;for(let k=0;k<7;k++){const dt=addD(ws,k);if(dt>t)break;if(isDone(dt))c++}return c};
 const lastDone=()=>Object.keys(S.days).filter(isDone).sort().pop()||'';
 const totalDone=()=>Object.keys(S.days).filter(isDone).length;
-function pushPlayer(){if(!FB||!S.nick||!S.level)return;const p={nick:S.nick.slice(0,12),group:'',level:S.level|0,streak:streak()|0,week:weekDone()|0,total:totalDone()|0,words:Object.keys(S.srs).length|0,last:lastDone()};const k=JSON.stringify(p);if(k===lastPush)return;lastPush=k;const{fs,db}=FB;pq=pq.then(()=>fs.setDoc(fs.doc(db,'players',FB.pid),p)).catch(()=>{lastPush=''})}
+function pushPlayer(){if(!FB||!S.nick||!S.level)return;const wk=weekStart(today());const p={nick:S.nick.slice(0,12),level:S.level|0,streak:streak()|0,week:weekDone()|0,total:totalDone()|0,words:Object.keys(S.srs).length|0,last:lastDone()};const k=wk+JSON.stringify(p);if(k===lastPush)return;lastPush=k;const{fs,db}=FB,pid=FB.pid;if(players&&rankGroup===wk){players=players.filter(x=>x.id!==pid).concat([Object.assign({id:pid},p)])}pq=pq.then(()=>fs.setDoc(fs.doc(db,'boards',wk),{[pid]:p},{merge:true})).catch(()=>{lastPush=''})}
 const getW=id=>{const[l,i]=String(id).split('-');const w=W[l]&&W[l][+i];return w?{id,en:w[0],ko:w[1],use:w[2],ex:w[3],exk:w[4]}:null};
 const dayN=()=>Math.max(0,diff(S.start||today(),today()));
 function wordsToday(n){const l=S.level,p=W[l],b=(((n-S.lvDay)*5)%p.length+p.length)%p.length;return[0,1,2,3,4].map(j=>getW(l+'-'+((b+j)%p.length)))}
@@ -101,7 +103,7 @@ h+=`</div>${lt?`<p class="note">지난 테스트: ${md(lt.date)} · ${lt.score}/
 function inviteLink(){return location.origin+location.pathname}
 const poked=id=>{const m=lsGet('honglish-poke')||{};return m[id]===today()};
 function rankRow(p){const me=FB&&p.id===FB.pid;const st=p.doneToday?'<span class="bdg ok">오늘 완료</span>':'<span class="bdg no">오늘 아직</span>';const pk=!me&&!p.doneToday?(poked(p.id)?'<button class="btn ghost sm" disabled>찔렀어요</button>':`<button class="btn cor sm" data-act="poke" data-id="${esc(p.id)}" data-n="${esc(p.nick)}">콕 찌르기</button>`):'';return `<div class="rk${me?' me':''}"><span class="n">${p.rank}</span><div><b>${esc(p.nick)}</b>${me?' <span class="use">(나)</span>':''} ${st}<div class="bar"><i style="width:${p.week/7*100}%"></i></div><div class="note">Lv.${p.level} · 연속 ${p.streak}일 · 단어 ${p.words}개</div>${pk?`<div style="margin-top:6px">${pk}</div>`:''}</div><div class="num">${p.week}일<small>이번 주</small></div></div>`}
-function vRank(){const ws=weekStart(today()),we=addD(ws,6);let h=`<section><h2>이번 주 랭킹</h2><p class="sub">${md(ws)}(월) ~ ${md(we)}(일) · 다섯 칸을 다 채운 날이 많을수록 위로 가요. 매주 월요일에 0부터 다시 시작해서 늦게 온 친구도 따라잡을 수 있어요.</p>`;
+function vRank(){const ws=weekStart(today()),we=addD(ws,6);let h=`<section><h2>이번 주 랭킹</h2><p class="sub">${md(ws)}(월) ~ ${md(we)}(일) · 다섯 칸을 다 채운 날이 많을수록 위로 가요. 매주 월요일에 0부터 다시 시작해서 늦게 온 친구도 따라잡을 수 있어요.</p>${FB&&players?`<div class="wrow" style="margin-bottom:10px"><span class="note grow">${new Date(rankAt).toLocaleTimeString('ko-KR',{hour:'2-digit',minute:'2-digit'})} 기준</span><button class="btn ghost sm" data-act="rankrefresh">새로고침</button></div>`:''}`;
 if(!window.FIREBASE_CONFIG)h+=`<div class="card note">랭킹 서버가 아직 연결되지 않았어요. 지금은 내 기록만 이 기기에 저장돼요.</div>`;
 else if(!FB)h+=`<div class="card note">${ready?'랭킹 서버에 연결하지 못했어요. 인터넷 연결을 확인해 주세요.':'랭킹 불러오는 중…'}</div>`;
 else if(playersErr)h+=`<div class="card note">랭킹을 불러오지 못했어요. 잠시 후 다시 열어주세요.</div>`;
@@ -117,7 +119,7 @@ function vOnboard(){return `<div class="wrap hero"><img class="logo" src="icon-1
 function render(){const app=$('#app');let v=(location.hash||'#today').slice(1);if(!['today','words','test','rank'].includes(v))v='today';document.body.classList.toggle('has-nav',!!(S.nick&&S.level));
 if(!S.nick){app.innerHTML=vOnboard();return}
 if(!S.level){if(!T||T.kind!=='level')T={kind:'level',qs:LT,i:0,score:0,pick:null};app.innerHTML=`<div class="wrap" style="padding-top:var(--safe-t)">${T.done?vResult():vQuiz()}</div>`;return}
-const y=window.scrollY;app.innerHTML=header()+`<main class="wrap">${v==='today'?vToday():v==='words'?vWords():v==='test'?vTest():vRank()}</main>`+tabs(v);window.scrollTo(0,y);if(ready)pushPlayer()}
+const y=window.scrollY;app.innerHTML=header()+`<main class="wrap">${v==='today'?vToday():v==='words'?vWords():v==='test'?vTest():vRank()}</main>`+tabs(v);window.scrollTo(0,y);if(ready){pushPlayer();if(v==='rank')loadRank(false)}}
 function setStar(k,en,ko,on){if(on)S.star[k]={en,ko};else delete S.star[k];save()}
 async function share(){const url=inviteLink(),text='홍글리쉬에서 같이 영어 공부하자!';try{if(navigator.share){await navigator.share({title:'홍글리쉬',text,url});return}}catch(e){if(e&&e.name==='AbortError')return}try{await navigator.clipboard.writeText(url);toast('초대 링크를 복사했어요')}catch(e){const i=$('#lnk');if(i){i.focus();i.select()}toast('링크를 길게 눌러 복사해 주세요')}}
 function act(a,el){const t=today(),d=S.days[t];
@@ -137,6 +139,7 @@ else if(a==='sstart'){const src=Object.entries(S.star).map(([k,v])=>({key:k,en:v
 else if(a==='unstarRight'){(T.right||[]).forEach(k=>delete S.star[k]);toast(`${T.right.length}개 별표를 뺐어요`);T=null}
 else if(a==='poke')return poke(el.dataset.id,el.dataset.n);
 else if(a==='usecode')return useCode();
+else if(a==='rankrefresh'){if(Date.now()-rankAt<10000){toast('방금 새로고침했어요');return}return loadRank(true)}
 else if(a==='cancelcode')K.pend=null;
 else if(a==='copycode'){const c=fmtCode(S.code);(navigator.clipboard?navigator.clipboard.writeText(c):Promise.reject()).then(()=>toast('코드를 복사했어요')).catch(()=>{const i=$('#mycode');if(i){i.focus();i.select()}toast('코드를 길게 눌러 복사해 주세요')});return}
 else if(a==='pokeclose')return clearPokes();
@@ -165,7 +168,8 @@ function subPoke(){if(!FB||unsubPoke)return;const{fs,db}=FB;unsubPoke=fs.onSnaps
 async function ensureAccount(){if(!FB||S.code||!S.nick)return;const{fs,db,uid}=FB;const code=genCode();try{S.updated=Date.now();const st=JSON.parse(JSON.stringify(Object.assign({},S,{code})));await fs.setDoc(fs.doc(db,'accounts',code),{pid:uid,state:st,updated:S.updated});await fs.setDoc(fs.doc(db,'links',uid),{pid:uid,code});S.code=code;FB.pid=uid;lsSet(LS,S);render()}catch(e){console.warn('account',e)}}
 async function findCode(raw){const code=normCode(raw);if(code.length!==10){toast('코드 10자리를 확인해 주세요');return}if(!FB){toast('서버에 연결 중이에요. 잠시 후 다시 해주세요');return}if(code===S.code){toast('지금 쓰고 있는 계정이에요');return}try{const s=await FB.fs.getDoc(FB.fs.doc(FB.db,'accounts',code));if(!s.exists()){toast('그 코드를 찾지 못했어요');return}const r=s.data();K.pend={code,pid:String(r.pid||''),state:r.state||{}};render()}catch(e){toast('불러오지 못했어요. 잠시 후 다시 해주세요')}}
 async function useCode(){const p=K.pend;if(!p||!FB||!p.pid)return;const{fs,db,uid}=FB;try{await fs.setDoc(fs.doc(db,'links',uid),{pid:p.pid,code:p.code});const old=FB.pid;FB.pid=p.pid;if(old===uid&&p.pid!==uid){try{await fs.deleteDoc(fs.doc(db,'players',uid))}catch(e){}}S=Object.assign(blank(),p.state);S.code=p.code;lsSet(LS,S);K.pend=null;lastPush='';T=null;if(unsubPoke){unsubPoke();unsubPoke=null}pokes=[];pokeIds=[];subPoke();subRank();toast(`${S.nick||''} 계정으로 이어서 할게요`);if(location.hash!=='#today')location.hash='#today';render()}catch(e){toast('계정을 연결하지 못했어요')}}
-function subRank(){if(!FB)return;if(unsubRank){unsubRank();unsubRank=null}players=null;playersErr=false;rankGroup=S.group||'';const{fs,db}=FB;unsubRank=fs.onSnapshot(fs.collection(db,'players'),s=>{players=s.docs.map(x=>Object.assign({id:x.id},x.data()));if((location.hash||'#today')==='#rank')render()},()=>{playersErr=true;render()})}
+function subRank(){players=null;rankAt=0;loadRank(true)}
+async function loadRank(force){if(!FB||rankBusy)return;if(!force&&(players||playersErr)&&Date.now()-rankAt<60000)return;rankBusy=true;playersErr=false;const wk=weekStart(today());try{const{fs,db}=FB;const snap=await fs.getDoc(fs.doc(db,'boards',wk));const d=snap.exists()?snap.data():{};players=Object.entries(d||{}).filter(([,v])=>v&&typeof v==='object').map(([id,v])=>Object.assign({},v,{id}));rankGroup=wk;rankAt=Date.now()}catch(e){playersErr=true;rankAt=Date.now()}rankBusy=false;if((location.hash||'#today')==='#rank')render()}
 async function initFB(){const cfg=window.FIREBASE_CONFIG;if(!cfg||!cfg.apiKey)return;const B='https://www.gstatic.com/firebasejs/10.12.2/';const[a,au,fs]=await Promise.all([import(B+'firebase-app.js'),import(B+'firebase-auth.js'),import(B+'firebase-firestore.js')]);const app=a.initializeApp(cfg);const auth=au.getAuth(app);const cur=await new Promise(res=>{const un=au.onAuthStateChanged(auth,u=>{un();res(u)})});const user=cur||(await au.signInAnonymously(auth)).user;const db=fs.getFirestore(app);FB={fs,db,uid:user.uid,pid:user.uid};
 try{let link=null;try{const ls=await fs.getDoc(fs.doc(db,'links',user.uid));if(ls.exists())link=ls.data()}catch(e){}const code=(link&&link.code)||S.code||'';if(code){const as=await fs.getDoc(fs.doc(db,'accounts',code));if(as.exists()){const r=as.data();FB.pid=String(r.pid||user.uid);if(r.state&&r.state.nick&&(!S.nick||(r.updated||0)>(S.updated||0)))S=Object.assign(blank(),r.state);S.code=code;lsSet(LS,S);if(!link)await fs.setDoc(fs.doc(db,'links',user.uid),{pid:FB.pid,code}).catch(()=>{})}else S.code=''}if(!S.code){const snap=await fs.getDoc(fs.doc(db,'users',user.uid)).catch(()=>null);if(snap&&snap.exists()){const r=snap.data();if(r&&r.nick&&(!S.nick||(r.updated||0)>(S.updated||0))){S=Object.assign(blank(),r);lsSet(LS,S)}}}}catch(e){}}
 (async()=>{render();
