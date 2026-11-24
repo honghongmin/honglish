@@ -100,3 +100,5 @@ label{display:block;font-weight:700;margin:14px 0 6px}
 .srch{margin:0 0 10px}.srch input{width:100%;font-size:16px;padding:12px;border-radius:12px;border:1px solid var(--line);background:var(--card);-webkit-appearance:none;appearance:none}
 .pokebar{display:flex;gap:10px;align-items:center;justify-content:space-between;margin-top:18px;padding:14px 16px;border-radius:14px;background:color-mix(in srgb,var(--coral) 14%,var(--bg));border:1px solid color-mix(in srgb,var(--coral) 40%,transparent)}
 .pokebar div div{font-size:14px;color:var(--mute)}
+.codebox{font:700 18px/1 Outfit,ui-monospace,monospace!important;letter-spacing:.08em;text-transform:uppercase}
+.codebox::placeholder{font:400 16px "IBM Plex Sans KR",sans-serif;letter-spacing:0;text-transform:none}
