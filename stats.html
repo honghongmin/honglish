@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="robots" content="noindex,nofollow">
+<title>홍글리쉬 통계</title>
+<link rel="stylesheet" href="style.css?v=9">
+<style>
+body{padding-bottom:40px}
+.kpis{display:grid;grid-template-columns:repeat(2,1fr);gap:10px;margin:12px 0 20px}
+@media(min-width:640px){.kpis{grid-template-columns:repeat(4,1fr)}}
+.kpi{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:14px}
+.kpi b{display:block;font-size:28px;line-height:1.1}
+.kpi span{font-size:13px;color:var(--mute)}
+table{width:100%;border-collapse:collapse;font-size:14px}
+th,td{padding:8px 6px;border-bottom:1px solid var(--line);text-align:right;white-space:nowrap}
+th:first-child,td:first-child{text-align:left}
+th{color:var(--mute);font-weight:600;font-size:12px}
+.bar2{height:8px;border-radius:99px;background:var(--soft);overflow:hidden;min-width:60px}
+.bar2 i{display:block;height:100%;background:var(--blue)}
+.tw{overflow-x:auto;background:var(--card);border:1px solid var(--line);border-radius:14px;padding:4px 10px;margin-bottom:20px}
+.who{display:flex;flex-wrap:wrap;gap:6px}
+.who span{background:var(--soft);border-radius:99px;padding:4px 10px;font-size:13px}
+.who span.done{background:color-mix(in srgb,var(--ok) 20%,transparent)}
+h2{font-size:18px;margin:18px 0 6px}
+</style>
+</head>
+<body>
+<main class="wrap" style="padding-top:calc(20px + var(--safe-t,0px))">
+<h1 style="margin:0">홍글리쉬 통계</h1>
+<p class="sub" id="sub">불러오는 중이에요…</p>
+<div id="out"></div>
+</main>
+<script src="config.js?v=9"></script>
+<script type="module">
+const $=s=>document.querySelector(s),esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const pad=n=>String(n).padStart(2,'0'),ymd=d=>d.getFullYear()+'-'+pad(d.getMonth()+1)+'-'+pad(d.getDate());
+const addD=(s,k)=>{const d=new Date(s+'T12:00:00');d.setDate(d.getDate()+k);return ymd(d)};
+const today=ymd(new Date()),DAYS=14,days=[...Array(DAYS)].map((_,i)=>addD(today,-i));
+const wk=(()=>{const d=new Date(today+'T12:00:00');const dow=(d.getDay()+6)%7;return addD(today,-dow)})();
+try{
+const B='https://www.gstatic.com/firebasejs/10.12.2/';
+const[a,au,F]=await Promise.all([import(B+'firebase-app.js'),import(B+'firebase-auth.js'),import(B+'firebase-firestore.js')]);
+const app=a.initializeApp(window.FIREBASE_CONFIG);const auth=au.getAuth(app);
+await new Promise(r=>{const un=au.onAuthStateChanged(auth,u=>{un();r(u)})});if(!auth.currentUser)await au.signInAnonymously(auth);
+const db=F.getFirestore(app);
+const snaps=await Promise.all(days.map(d=>F.getDoc(F.doc(db,'stats',d)).catch(()=>null)));
+const S={};days.forEach((d,i)=>{const s=snaps[i];S[d]=s&&s.exists()?s.data():{}});
+const board=await F.getDoc(F.doc(db,'boards',wk)).then(s=>s.exists()?s.data():{}).catch(()=>({}));
+let legacy=[];try{legacy=(await F.getDocs(F.collection(db,'players'))).docs.map(d=>d.id)}catch(e){}
+const all=new Set([...Object.keys(board),...legacy]);days.forEach(d=>Object.keys(S[d]).forEach(p=>all.add(p)));
+const T=S[today],tAct=Object.keys(T).length,tDone=Object.values(T).filter(e=>e.p>=5).length;
+const wAct=new Set();days.filter(d=>d>=wk).forEach(d=>Object.keys(S[d]).forEach(p=>wAct.add(p)));
+let h=`<div class="kpis"><div class="kpi"><b>${tAct}</b><span>오늘 들어온 사람</span></div><div class="kpi"><b>${tDone}</b><span>오늘 다섯 칸 완료</span></div><div class="kpi"><b>${wAct.size}</b><span>이번 주 들어온 사람</span></div><div class="kpi"><b>${all.size}</b><span>지금까지 참여한 사람(추정)</span></div></div>`;
+const max=Math.max(1,...days.map(d=>Object.keys(S[d]).length));
+h+=`<h2>최근 ${DAYS}일</h2><p class="note">들어온 사람 = 그날 앱을 열고 공부 화면을 본 사람. 완료 = 다섯 칸을 다 채운 사람. 신규 = 그날 처음 시작한 사람.</p><div class="tw"><table><tr><th>날짜</th><th>들어옴</th><th></th><th>완료</th><th>완료율</th><th>신규</th><th>평균 칸</th></tr>`;
+days.forEach(d=>{const v=Object.values(S[d]),n=v.length,dn=v.filter(e=>e.p>=5).length,nw=v.filter(e=>e.f===d).length,avg=n?(v.reduce((s,e)=>s+(e.p|0),0)/n).toFixed(1):'-';
+h+=`<tr><td>${d.slice(5).replace('-','/')}${d===today?' (오늘)':''}</td><td>${n}</td><td><div class="bar2"><i style="width:${n/max*100}%"></i></div></td><td>${dn}</td><td>${n?Math.round(dn/n*100)+'%':'-'}</td><td>${nw}</td><td>${avg}</td></tr>`});
+h+=`</table></div>`;
+// 재방문: 그날 시작한 사람 중 며칠 뒤에도 들어온 비율
+const ret=k=>{let base=0,back=0;days.forEach(d=>{const r=addD(d,k);if(r>today||!(r in S))return;const starters=Object.entries(S[d]).filter(([,e])=>e.f===d).map(([p])=>p);base+=starters.length;back+=starters.filter(p=>S[r][p]).length});return base?`${Math.round(back/base*100)}% <span class="note">(${back}/${base}명)</span>`:'<span class="note">아직 데이터 부족</span>'};
+h+=`<h2>재방문율</h2><p class="note">처음 시작한 사람 중 며칠 뒤에도 다시 들어온 비율이에요. 오래 쓰는 앱인지 보는 가장 중요한 숫자예요.</p><div class="tw"><table><tr><th>기준</th><th>재방문율</th></tr><tr><td>다음 날(1일 뒤)</td><td>${ret(1)}</td></tr><tr><td>3일 뒤</td><td>${ret(3)}</td></tr><tr><td>7일 뒤</td><td>${ret(7)}</td></tr></table></div>`;
+const lv={1:0,2:0,3:0};Object.values(board).forEach(e=>{if(e&&lv[e.level]!=null)lv[e.level]++});
+h+=`<h2>이번 주 레벨 분포</h2><div class="tw"><table><tr><th>레벨</th><th>인원</th></tr>${[1,2,3].map(l=>`<tr><td>Lv.${l}</td><td>${lv[l]}</td></tr>`).join('')}</table></div>`;
+const tl=Object.values(T).sort((x,y)=>y.p-x.p);
+h+=`<h2>오늘 들어온 사람</h2><div class="who">${tl.length?tl.map(e=>`<span class="${e.p>=5?'done':''}">${esc(e.n)} ${e.p}/5</span>`).join(''):'<span>아직 없어요</span>'}</div>`;
+$('#out').innerHTML=h;$('#sub').textContent=`${new Date().toLocaleString('ko-KR')} 기준 · 통계는 2026년 11월 25일부터 쌓여요.`;
+}catch(e){$('#sub').textContent='불러오지 못했어요: '+(e&&e.message||e)}
+</script>
+</body>
+</html>
