@@ -102,3 +102,13 @@ label{display:block;font-weight:700;margin:14px 0 6px}
 .pokebar div div{font-size:14px;color:var(--mute)}
 .codebox{font:700 18px/1 Outfit,ui-monospace,monospace!important;letter-spacing:.08em;text-transform:uppercase}
 .codebox::placeholder{font:400 16px "IBM Plex Sans KR",sans-serif;letter-spacing:0;text-transform:none}
+.wbox{min-height:52px;border:1.5px dashed var(--line);border-radius:12px;padding:8px;display:flex;flex-wrap:wrap;gap:6px;align-items:center;margin-bottom:10px}
+.wbox.good{border-style:solid;border-color:var(--ok);background:rgba(79,211,154,.08)}
+.wbox .ph0{color:var(--mute);font-size:14px}
+.wpool{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:6px}
+.wc{font:inherit;font-size:16px;padding:8px 12px;border-radius:10px;border:1px solid var(--line);background:var(--card);color:var(--ink);cursor:pointer;min-height:40px}
+.wc.on{background:var(--blue);border-color:var(--blue);color:#fff}
+.wc:disabled{cursor:default;opacity:1}
+.alts{margin-top:10px;display:flex;flex-direction:column;gap:6px}
+.alt{background:var(--soft);border-radius:10px;padding:8px 10px}
+.alt .k{font-size:13px;color:var(--mute);margin-top:2px}
