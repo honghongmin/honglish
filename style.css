@@ -188,3 +188,12 @@ a.btn{display:inline-flex;align-items:center;justify-content:center;text-decorat
 .gr{display:inline-block;width:26px;text-align:center}
 .meg{background:var(--soft);border-radius:8px;padding:2px 4px}
 .gcardl .btn{min-width:84px}
+.tabs a{position:relative}
+.nbdg{position:absolute;top:4px;left:calc(50% + 6px);min-width:18px;height:18px;padding:0 5px;border-radius:9px;background:#e5484d;color:#fff;font-size:11px;font-weight:700;line-height:18px;text-align:center;box-shadow:0 0 0 2px var(--bg)}
+@media (max-width:380px){.tabs a{font-size:11px;padding-left:2px;padding-right:2px}.tabs svg{width:22px;height:22px}}
+.duelst{display:flex;justify-content:space-around;text-align:center;padding:12px 8px}
+.duelst b{display:block;font-size:26px;line-height:1.1}
+.duelst span{font-size:13px;color:var(--mute)}
+.card.chl.new{border-color:var(--blue);box-shadow:0 0 0 2px color-mix(in srgb,var(--blue) 25%,transparent)}
+.newt{display:inline-block;background:#e5484d;color:#fff;font-size:11px;font-weight:700;padding:1px 6px;border-radius:6px;vertical-align:2px}
+.chbar .btn{white-space:nowrap;flex-shrink:0}
