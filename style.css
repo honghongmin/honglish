@@ -215,3 +215,6 @@ a.btn{display:inline-flex;align-items:center;justify-content:center;text-decorat
 .tquick .chip{flex-shrink:0;border:1px solid var(--line);background:var(--card);border-radius:99px;padding:5px 10px;font-size:13px;color:inherit}
 .tcf{display:flex;gap:8px}
 .tcf input{flex:1;min-width:0}
+.rmrow{padding:8px 0;border-top:1px solid var(--line)}
+.rmrow:first-child{border-top:0}
+.rmrow.dim{opacity:.65}
