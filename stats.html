@@ -65,7 +65,16 @@ const lv={1:0,2:0,3:0};Object.values(board).forEach(e=>{if(e&&lv[e.level]!=null)
 h+=`<h2>이번 주 레벨 분포</h2><div class="tw"><table><tr><th>레벨</th><th>인원</th></tr>${[1,2,3].map(l=>`<tr><td>Lv.${l}</td><td>${lv[l]}</td></tr>`).join('')}</table></div>`;
 const tl=Object.values(T).sort((x,y)=>y.p-x.p);
 h+=`<h2>오늘 들어온 사람</h2><div class="who">${tl.length?tl.map(e=>`<span class="${e.p>=5?'done':''}">${esc(e.n)} ${e.p}/5</span>`).join(''):'<span>아직 없어요</span>'}</div>`;
-$('#out').innerHTML=h;$('#sub').textContent=`${new Date().toLocaleString('ko-KR')} 기준 · 통계는 2026년 11월 25일부터 쌓여요.`;
+const NM={};Object.entries(board).forEach(([p,e])=>{if(e&&e.nick)NM[p]=e.nick});days.slice().reverse().forEach(d=>Object.entries(S[d]).forEach(([p,e])=>{if(e&&e.n)NM[p]=e.n}));
+h+=`<h2>🔑 친구 계정 코드 찾기</h2><p class="note">관리자 Google 계정(dtsoohong@gmail.com)으로 로그인해야 보여요. 닉네임을 누르면 그 친구의 계정 코드가 나와요. 코드는 친구가 업데이트된 앱을 한 번 열어야 저장돼요.</p><div class="tw" style="padding:12px"><div id="adm"></div></div>`;
+$('#out').innerHTML=h;
+const ADMIN='dtsoohong@gmail.com';
+const admUI=()=>{const u=auth.currentUser,ok=u&&u.email===ADMIN;const el=$('#adm');if(!ok){el.innerHTML=`${u&&u.email?`<p class="note">${esc(u.email)} 계정은 관리자가 아니에요.</p>`:''}<button class="btn" id="glogin">Google로 관리자 로그인</button>`;$('#glogin').onclick=async()=>{try{await au.signInWithPopup(auth,new au.GoogleAuthProvider());admUI()}catch(e){alert('로그인 실패: '+(e.code||e.message))}};return}
+const L=Object.entries(NM).sort((x,y)=>String(x[1]).localeCompare(String(y[1]),'ko'));el.innerHTML=`<p class="note" style="margin-top:0">${esc(u.email)} 로그인됨 · ${L.length}명</p><input type="search" id="q" placeholder="닉네임 검색" style="width:100%;margin-bottom:10px"><div class="who" id="nl">${L.map(([p,n])=>`<span class="nk" data-p="${esc(p)}" style="cursor:pointer">${esc(n)}</span>`).join('')}</div><div id="cres" style="margin-top:12px"></div>`;
+$('#q').oninput=e=>{const v=e.target.value.trim().toLowerCase();document.querySelectorAll('#nl .nk').forEach(x=>{x.style.display=!v||x.textContent.toLowerCase().includes(v)?'':'none'})};
+$('#nl').onclick=async e=>{const t=e.target.closest('.nk');if(!t)return;const r=$('#cres');r.innerHTML='<p class="note">찾는 중…</p>';try{const sn=await F.getDoc(F.doc(db,'codes',t.dataset.p));if(!sn.exists()){r.innerHTML=`<div class="card"><b>${esc(t.textContent)}</b><p class="note">아직 저장된 코드가 없어요. 친구가 업데이트된 앱을 한 번 열면 생겨요.</p></div>`;return}const d=sn.data(),c=String(d.c||''),f=c.length===10?c.slice(0,5)+'-'+c.slice(5):c;r.innerHTML=`<div class="card"><b>${esc(d.n||t.textContent)}</b>의 계정 코드<div style="font-size:26px;font-weight:800;letter-spacing:2px;margin:8px 0">${esc(f)}</div><button class="btn sm" id="ccopy">복사</button><p class="note">친구에게 이 코드를 알려주면, 앱 첫 화면이나 랭킹 탭 아래 \"다른 기기에서 쓰던 계정 불러오기\"에 넣어서 이어서 할 수 있어요.</p></div>`;$('#ccopy').onclick=()=>navigator.clipboard.writeText(f).then(()=>alert('복사했어요'))}catch(err){r.innerHTML=`<p class="note">불러오지 못했어요: ${esc(err.code||err.message)}</p>`}}};
+admUI();
+$('#sub').textContent=`${new Date().toLocaleString('ko-KR')} 기준 · 통계는 2026년 11월 25일부터 쌓여요.`;
 }catch(e){$('#sub').textContent='불러오지 못했어요: '+(e&&e.message||e)}
 </script>
 </body>
