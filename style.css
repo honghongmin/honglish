@@ -206,3 +206,12 @@ a.btn{display:inline-flex;align-items:center;justify-content:center;text-decorat
 .gopt.w{background:color-mix(in srgb,#e5484d 20%,var(--card));border-color:#e5484d}
 .tres{padding:8px 4px;border-bottom:1px solid var(--line)}
 .tres.me{font-weight:800}
+.tchat{margin-top:12px}
+.tmsgs{max-height:220px;overflow-y:auto;display:flex;flex-direction:column;gap:6px;margin:8px 0;padding:4px 2px}
+.cm{align-self:flex-start;max-width:85%;background:var(--soft);border-radius:14px 14px 14px 4px;padding:6px 10px;font-size:14px;line-height:1.35;word-break:break-word}
+.cm b{display:block;font-size:12px;color:var(--mute);font-weight:700}
+.cm.me{align-self:flex-end;background:var(--blue);color:#fff;border-radius:14px 14px 4px 14px}
+.tquick{display:flex;gap:6px;overflow-x:auto;padding-bottom:4px;margin-bottom:8px}
+.tquick .chip{flex-shrink:0;border:1px solid var(--line);background:var(--card);border-radius:99px;padding:5px 10px;font-size:13px;color:inherit}
+.tcf{display:flex;gap:8px}
+.tcf input{flex:1;min-width:0}
