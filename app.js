@@ -58,7 +58,7 @@ function badgeHTML(){const e=new Set(earned());return `<section><h2>내 뱃지 <
 function myEntry(){return{nick:S.nick.slice(0,12),level:S.level|0,streak:streak()|0,week:weekDone()|0,total:totalDone()|0,words:Object.keys(S.srs).length|0,last:lastDone(),td:today(),tp:todayProg(),tt:titleOf(S.title).slice(0,12)}}
 let lastStat='';function pushStat(){if(!FB||!S.nick||!S.level)return;const t=today(),e={n:S.nick.slice(0,12),p:todayProg(),f:String(S.start||t).slice(0,10),l:S.level|0},k=t+JSON.stringify(e);if(k===lastStat)return;lastStat=k;const{fs,db}=FB;pq=pq.then(()=>fs.setDoc(fs.doc(db,'stats',t),{[FB.pid]:e},{merge:true})).catch(()=>{lastStat=''})}
 function pushPlayer(){if(!FB||!S.nick||!S.level)return;pushStat();const wk=weekStart(today());const p=myEntry();const k=wk+JSON.stringify(p);if(k===lastPush)return;lastPush=k;const{fs,db}=FB,pid=FB.pid;if(players&&rankGroup===wk){players=players.filter(x=>x.id!==pid).concat([Object.assign({id:pid},p)])}pq=pq.then(()=>fs.setDoc(fs.doc(db,'boards',wk),{[pid]:p},{merge:true})).catch(()=>{lastPush=''})}
-const getW=id=>{if(/^[xk]:/.test(String(id))){const x=S.xi&&S.xi[id];return x?{id,en:x.en,ko:x.ko,t:String(id)[0]}:null}const[l,i]=String(id).split('-');const w=W[l]&&W[l][+i];return w?{id,en:w[0],ko:w[1],use:w[2],ex:w[3],exk:w[4]}:null};
+const getW=id=>{if(/^g:/.test(String(id))){const[l,i]=String(id).slice(2).split('-'),g=window.HG.GX&&window.HG.GX[l]&&window.HG.GX[l][+i];return g?{id,en:g[0],ko:g[1],t:'g'}:null}if(/^[xk]:/.test(String(id))){const x=S.xi&&S.xi[id];return x?{id,en:x.en,ko:x.ko,t:String(id)[0]}:null}const[l,i]=String(id).split('-');const w=W[l]&&W[l][+i];return w?{id,en:w[0],ko:w[1],use:w[2],ex:w[3],exk:w[4]}:null};
 const dayN=()=>Math.max(0,diff(S.start||today(),today()));
 function wordsToday(n){const l=S.level,p=W[l],b=(((n-S.lvDay)*5)%p.length+p.length)%p.length;return[0,1,2,3,4].map(j=>getW(l+'-'+((b+j)%p.length)))}
 const lvList=(k,fb)=>{const m=window.HG[k];return m&&m[S.level]&&m[S.level].length?m[S.level]:fb};
@@ -201,7 +201,7 @@ return `<div class="card"><b>⚔️ ${esc(T.from||'친구')}님의 도전장 결
 /* 게임: 단어 소나기 · 60초 스피드 퀴즈 */
 let G=null,gData=null,gAt=0,gBusy=false;
 const GN={rain:'단어 소나기',speed:'60초 스피드 퀴즈'};
-const gPool=()=>{const l=W[S.level]?S.level:1;return W[l].map((w,i)=>({id:l+'-'+i,en:w[0],ko:w[1]}))};
+const gPool=()=>{const l=W[S.level]?S.level:1,gx=(window.HG.GX&&window.HG.GX[l])||[];return W[l].map((w,i)=>({id:l+'-'+i,en:w[0],ko:w[1]})).concat(gx.map((w,i)=>({id:'g:'+l+'-'+i,en:w[0],ko:w[1]})))};
 function gMiss(w){if(!w||!w.id)return;if(G)G.miss=(G.miss||0)+1;S.gw=S.gw||{};const o=S.gw[w.id]||{n:0};o.n++;o.at=Date.now();S.gw[w.id]=o;const ks=Object.keys(S.gw);if(ks.length>200){ks.sort((a,b)=>S.gw[a].at-S.gw[b].at).slice(0,ks.length-200).forEach(k=>delete S.gw[k])}}
 function gReset(){const wk=weekStart(today());if(!S.gb||S.gb.wk!==wk||S.gb.lv!==S.level)S.gb={wk,lv:S.level|0,r:0,s:0}}
 function gQ(){const P=gPool(),w=P[Math.floor(Math.random()*P.length)],ek=G.kind==='speed'&&Math.random()<.5,f=ek?'ko':'en';const others=shuf(P.filter(x=>x.en!==w.en&&x.ko!==w.ko).map(x=>x[f])).filter((v,i,a)=>a.indexOf(v)===i).slice(0,3);const o=shuf([w[f]].concat(others));return{w,q:ek?w.en:w.ko,ek,o,a:o.indexOf(w[f])}}
