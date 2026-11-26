@@ -199,3 +199,10 @@ a.btn{display:inline-flex;align-items:center;justify-content:center;text-decorat
 .chbar .btn{white-space:nowrap;flex-shrink:0}
 .glv{font-size:11px;font-weight:600;color:var(--mute);border:1px solid var(--line);border-radius:6px;padding:0 4px;vertical-align:1px}
 .rkseg{margin-top:18px}
+.tboard{display:flex;flex-wrap:wrap;gap:6px;justify-content:center;margin:6px 0 2px}
+.tboard .tb{background:var(--soft);border-radius:99px;padding:3px 10px;font-size:13px}
+.tboard .tb.me{background:var(--blue);color:#fff}
+.gopt.r{background:color-mix(in srgb,var(--ok) 25%,var(--card));border-color:var(--ok)}
+.gopt.w{background:color-mix(in srgb,#e5484d 20%,var(--card));border-color:#e5484d}
+.tres{padding:8px 4px;border-bottom:1px solid var(--line)}
+.tres.me{font-weight:800}
