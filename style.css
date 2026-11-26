@@ -160,3 +160,5 @@ label{display:block;font-weight:700;margin:14px 0 6px}
 .pd.p2 .pb{height:70px;background:#9aa7bd}
 .pd.p3 .pb{height:52px;background:#cf8a5a}
 a.btn{display:inline-flex;align-items:center;justify-content:center;text-decoration:none}
+.chbar{background:color-mix(in srgb,var(--blue) 14%,var(--card))}
+.card.chl .wrow{margin-top:4px}
