@@ -235,3 +235,9 @@ a.btn{display:inline-flex;align-items:center;justify-content:center;text-decorat
 .top.mini .brand{margin:0}
 .quiz .qus{background:var(--card);border:1px solid var(--line);color:var(--ink)}
 .quiz .qus:not(.ghost){background:var(--blue);color:#fff;border-color:var(--blue)}
+.ib.st.half svg{fill:none;stroke:var(--star);stroke-width:2}
+.ib.st.half svg .h{fill:var(--star);stroke:none}
+.quiz .qmk{display:flex;flex-wrap:wrap;gap:6px;align-items:center;margin-top:8px}
+.quiz .qmk button{flex:1 1 auto;font:inherit;font-size:13px;padding:7px 8px;border-radius:10px;border:1px solid var(--line);background:var(--card);color:var(--ink);cursor:pointer}
+.quiz .qmk button.on{background:var(--blue);border-color:var(--blue);color:#fff;font-weight:700}
+.quiz .qmk>.note:first-child{width:100%}
