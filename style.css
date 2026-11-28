@@ -242,3 +242,6 @@ a.btn{display:inline-flex;align-items:center;justify-content:center;text-decorat
 .quiz .qmk button.on{background:var(--blue);border-color:var(--blue);color:#fff;font-weight:700}
 .quiz .qmk>.note:first-child{width:100%}
 .quiz .qdir{display:inline-block;font-size:12px;font-weight:700;color:var(--blue);background:var(--soft);border-radius:8px;padding:2px 8px;margin-bottom:4px}
+.srev .sri{padding:8px 0;border-top:1px dashed var(--line)}
+.srev .sri:first-of-type{border-top:0}
+.srev .sri .bdg{margin-right:6px}
